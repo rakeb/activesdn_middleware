@@ -1,19 +1,15 @@
 from pyparsing import Word, nums, alphas, alphanums, Forward, delimitedList, Group, oneOf, srange, Optional, OneOrMore, \
     Combine, ZeroOrMore, infixNotation, opAssoc
+from pythonds import BinaryTree
 
 from policy.parser.parsePythonValue import (integer, real, dictStr as dict_literal,
                                             listStr as list_literal, tupleStr as tuple_literal, lparen, rparen)
 
+import policy.parser.converter as converter
+
 
 # -*- coding: utf-8 -*-
 def policy_parser():
-    if_s = 'IF (DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command ' \
-           'FOR PREVENT OUTCOME O1) THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> ' \
-           'USING deny-command FOR PREVENT OUTCOME O2 '
-    elseif_s = 'ELSEIF (DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3) THEN DO Block ON flows  OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4 '
-    e_s = 'ELSE DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> ' \
-          'USING deny-command FOR PREVENT OUTCOME O5'
-
     # defines ip_address
     ip_address = Word(nums) + ('.' + Word(nums)) * 3
 
@@ -22,7 +18,6 @@ def policy_parser():
     dashed_id = Word(alphas + '-', alphanums + '-')
     identifier = dashed_id ^ underscore_id
     # print(identifier.parseString('src-ip'))
-
 
     # defines comparision
     comp_oper = oneOf("< = > <= >= != ∉ ∈ <> ∅")
@@ -43,7 +38,6 @@ def policy_parser():
     # print(func_call.parseString('Link-Flooded() '))
 
     # ActiveSDN Policy BNF
-
     # using rate > 50%
     operator = oneOf('OR or ; || && ->')
     weight = srange(1 - 10)
@@ -79,7 +73,7 @@ def policy_parser():
     value = delimitedList(Group(outcome_value)) | identifier
     # print(Value.parseString('P,l  && P <> 0'))
 
-    # OF(proto=CIMP or UDP in P)
+    # OF(proto=ICMP or UDP in P)
     # OF E
     # OF(src_ip ∈ N)
     # OF(src_ip ∈ WHITE - LIST)
@@ -117,274 +111,73 @@ def policy_parser():
     action_spec = do_action + Optional(on_object) + Optional(of_obj_attribute_values) + Optional(
         by_actuator_spec) + Optional(using_action_attribution) + Optional(for_goal) + outcome_value
     action_spec = Group(delimitedList(action_spec))
-
     # print(action_spec.parseString(
     #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1'))
 
     # + Optional('UNTIL' + event__exp)
-    # action_spec = identifier
-    coas = Forward()
-    coas << (ZeroOrMore('(') + action_spec + operator + coas + ZeroOrMore(')')
-             | action_spec)
+
+    # coas = Forward()
+    # coas << (ZeroOrMore('(') + action_spec + operator + coas + ZeroOrMore(')')
+    #          | action_spec)
 
     # print(coas.parseString(
     #     'DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅'))
     # print(coas.parseString(
     #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1'))
-    out_coas = coas.parseString(
-        '(DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1 '
-        'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)'
-        '|| DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)')
+    # out_coas = coas.parseString(
+    #     '(DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1 '
+    #     'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)'
+    #     '|| DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)')
     # for s in out_coas:
-        # print(s)
+    # print(s)
 
-    r = ZeroOrMore(coas)
-    out_coas = r.parseString(
-        '((DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1 '
-        'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2) '
-        '|| DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)')
+    # r = ZeroOrMore(coas)
+    # out_coas = r.parseString(
+    #     '((DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1 '
+    #     'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2) '
+    #     '|| DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2)')
     # for s in out_coas:
-        # print(s)
+    # print(s)
+
+    coas = infixNotation(action_spec,
+                         [
+                             (oneOf('OR ||'), 2, opAssoc.LEFT),
+                             (oneOf('&& ;'), 2, opAssoc.LEFT),
+                         ])
+    if_then_clause = 'IF' + ZeroOrMore(lparen) + identifier + ZeroOrMore(rparen) + 'THEN'
+    else_if_then_clause = "ELSE IF" + ZeroOrMore(lparen) + identifier + ZeroOrMore(rparen) + 'THEN'
+
+    coas_spec = action_spec + operator + if_then_clause + coas + ZeroOrMore(else_if_then_clause + coas) + 'ELSE' \
+                + coas | coas
 
     temp_context_exp = func_call
     config_context_exp = func_call
     dynamic_context_exp = func_call
     context_exp = Group(temp_context_exp | config_context_exp | dynamic_context_exp).setName('exp')
-    parser = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + \
-             infixNotation(action_spec,
-                           [
-                               (oneOf('OR ||'), 2, opAssoc.LEFT),
-                               (oneOf('&& ;'), 2, opAssoc.LEFT),
-                           ])
+
+    rule = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + coas_spec
+
     policy_string = ''
-    with open('policy_1.txt') as f:
+    with open('policy_2.txt') as f:
         content = f.read()
         policy_string += content
-
         # print(policy_string)
 
-        parsed_policy = parser.parseString(policy_string)
-        for rule in parsed_policy:
-            print(rule)
-
-        [
-            [
-                [
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                    ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-                    'OUTCOME', 'O1'],
-                    '||',
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                    ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-                    'OUTCOME', 'O2']
-                ],
-                ';',
-                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-                'OUTCOME', 'O3']
-            ],
-            'OR',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-            'OUTCOME', 'O4']
-        ]
-
-    [
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-            'O1'],
-            '||',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                     ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                     'PREVENT', 'OUTCOME', 'O2']
-        ],
-        ';',
-        [
-         ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-          ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-          'OUTCOME', 'O3'], 'OR',
-         ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-          ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-          'OUTCOME', 'O4']
-        ]
-    ]
-
-    [
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-            'O1'],
-            '||',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O2']
-        ], ';',
-        [
-         ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-          ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-          'OUTCOME', 'O3'],
-        'OR',
-         ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-          ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-          'OUTCOME', 'O4']
-        ]
-    ]
-
-    [
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-            'O1'],
-            '||',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                     ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                     'PREVENT', 'OUTCOME', 'O2']
-        ],
-        ';',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-      ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-      'O3']
-    ]
-
-    [
-        [
-            [
-                'DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-                'O1'
-            ],
-            '||',
-            [
-                    'DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                     ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                     'PREVENT', 'OUTCOME', 'O2'
-            ]
-        ],
-        ';',
-        [
-            'DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-            'O3'
-        ]
-    ]
-
-    # print(parser.parseString('(2 + 3) * 4'))
-    # print(parser.parseString('((DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1 '
-    #     'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2) '
-    #     '&& DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3)'))
-
-    # COA SPEC
-    # ca_spec = (Optional('ELSE') + 'IF' + Optional(OneOrMore(lparen)) + coas + Optional(OneOrMore(rparen)) + 'THEN' + coas) | ('ELSE' + coas) | coas
-    ca_spec = coas | 'IF' + ZeroOrMore(lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE IF' + ZeroOrMore(
-        lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE' + coas
-
-    # ca_spec = Optional('ELSE') + 'IF' + lparen + coas + rparen + 'THEN' + coas | 'ELSE' + coas
-    coas_spec = Group(delimitedList(ca_spec))
-    short_policy = if_s + elseif_s + e_s
-    # print(coas_spec.parseString(short_policy))
-    # print(ca_spec.parseString(elseif_s))
-    # print(coas_spec.parseString("ELSE IF (DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅) THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME o"))
-    #
-    # print(coas_spec.parseString(
-    #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT'))
-    # out_coas = coas_spec.parseString(
-    #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT '
-    #     'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT')
-    # for s in out_coas:
-    #     print(s)
-
-    #
-    # print(coas_spec.parseString(
-    #         'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT'))
-    # out_coas = coas_spec.parseString(
-    #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT '
-    #     'OR DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT')
-    # for s in out_coas:
-    #     print(s)
-
-    # a = ZeroOrMore(lparen) + ZeroOrMore(coas_spec) + ZeroOrMore(rparen)
-    # print(a.parseString(short_policy))
-    # coas_spec = Group(delimitedList(ca_spec))
-
-    # coas_spec = Forward()
-    # if_then_else = Optional('IF') + Optional(OneOrMore(lparen)) + coas + Optional(OneOrMore(rparen)) + \
-    #                'THEN' + coas + "ELSE" + coas
-    # coas_spec << (coas ^ if_then_else)
-    # coas_spec << (('IF' + coas + 'THEN' + coas_spec + oneOf('ELSE ELSEIF') + coas_spec) | coas)
-    # coas_spec << (('IF' + Optional(OneOrMore(lparen)) + Group(delimitedList(coas)) + Optional(OneOrMore(rparen)) +
-    #                'THEN' + coas_spec + Optional(OneOrMore('ELSE' + coas_spec)) + 'ELSE' +
-    #                coas_spec | Group(delimitedList(coas))))
-
-    # print(coas_spec.parseString(if_s + elseif_s + e_s))
-    # print(coas_spec.parseString(if_s + elseif_s + e_s))
-    # print(coas_spec.parseString(short_policy))
-    # print(if_then_else.parseString(short_policy))
-
-
-    # print(coas_spec.parseString(
-    #     'IF (DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅) THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT'))
-    #
-    # print(coas_spec.parseString(
-    #     'ELSE IF (DO CheckElephantTCPFlow ON flows BY IDS-App USING rate  > 90% FOR DETECT OUTCOME E && E <> ∅) THEN DO Block ON flows OF E BY FIREWALL<1.5.6.4, admin> USING deny-command FOR PREVENT'))
-    #
-    # print(coas_spec.parseString(
-    #     'IF (DO CheckNewComers ON flows BY IDS-App USING window < 1 OUTCOME N, rate && rate > 75%) THEN DO Rereoute ON flows OF (src_ip ∈ N) BY ROUTER USING RRM<>'))
-    #
-    # print(coas_spec.parseString(
-    #     'ELSE DO Replicate ON services OF (Reachable(L) && dport=80) USING replicate-command  DO Reroute ON flows  OF USING Switch'))
-    #
-    # print(coas_spec.parseString(
-    #     'ELSE  DO Reroute ON flows USING Switch'))
-    #
-    # print(coas_spec.parseString(
-    #     'IF (DO CheckNewComers ON flows BY IDS-App USING window < 1 OUTCOME N, rate && rate > 75%) THEN DO Rereoute ON flows OF (src_ip ∈ N) BY ROUTER USING RRM ELSE DO Reroute ON flows USING Switch'))
-    #
-    # print(coas_spec.parseString(if_s))
-    # print(coas_spec.parseString(elseif_s))
-    # a = Optional(lparen) + ZeroOrMore(coas_spec) + Optional(rparen)
-    # print(a.parseString(
-    #     '(IF (DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅) THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT '
-    #     'ELSE IF (DO CheckElephantTCPFlow ON flows BY IDS-App USING rate  > 90% FOR DETECT OUTCOME E && E <> ∅) THEN DO Block ON flows OF E BY FIREWALL<1.5.6.4, admin> USING deny-command FOR PREVENT '
-    #     'ELSE DO Replicate ON services OF (Reachable(L) && dport=80) USING replicate-command  '
-    #     'ELSE DO Reroute ON flows USING Switch)'
-    # ))
-
-    temp_context_exp = func_call
-    config_context_exp = func_call
-    dynamic_context_exp = func_call
-    context_exp = Group(temp_context_exp | config_context_exp | dynamic_context_exp).setName('exp')
-
-    rule = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + ZeroOrMore(coas_spec)
-    # print(rule.parseString(
-    #     'Link-Flooded(T,L) -> ELSE IF (DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅) THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME o'))
-
-    # parsed_policy = rule.parseString(
-    #     '(Link-Flooded(T,L)) -> '
-    #         'IF (DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% '
-    #             'OUTCOME P && P <> ∅) THEN '
-    #                 'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> '
-    #                 'USING deny-command FOR PREVENT '
-    #         'ELSE IF (DO CheckElephantTCPFlow ON flows BY IDS-App USING rate>90% '
-    #             'FOR DETECT OUTCOME E && E <> ∅) THEN '
-    #                 'DO Block ON flows OF E BY FIREWALL <1.5.6.4, admin> '
-    #                 'USING deny-command FOR PREVENT '
-    #         'ELSE '
-    #             'DO Replicate ON services OF (Reachable(L) && dport=80) USING replicate-command  '
-    # )
+    parsed_policy = rule.parseString(policy_string)
+    # print(parsed_policy)
     # for rule in parsed_policy:
     #     print(rule)
 
-    policy_string = ''
-    with open('policy_1.txt') as f:
-        content = f.read()
-        policy_string += content
+    # e_tree = BinaryTree('')
+    converter.clips_policy_list_to_parse_tree(parsed_policy, converter.currentTree)
+    converter.eTree.inorder()
 
-        # print(policy_string)
-
-        # parsed_policy = rule.parseString(policy_string)
-        # for rule in parsed_policy:
-        #     print(rule)
+    # temp_context_exp = func_call
+    # config_context_exp = func_call
+    # dynamic_context_exp = func_call
+    # context_exp = Group(temp_context_exp | config_context_exp | dynamic_context_exp).setName('exp')
+    #
+    # rule = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + ZeroOrMore(coas_spec)
 
 
 if __name__ == '__main__':

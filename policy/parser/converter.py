@@ -5,7 +5,8 @@ pStack = Stack()
 eTree = BinaryTree('')
 pStack.push(eTree)
 currentTree = eTree
-operators = ['OR', 'or', ';', '||']
+operators = ['OR', 'or', ';', '||', '->']
+if_then_else = ['IF', 'THEN', 'ELSE IF', 'ELSE']
 
 a_list = [
     [
@@ -38,6 +39,40 @@ a_list = [
         ]
     ]
 ]
+
+b_list = [['Link-Flooded', '(', ['T'], ['L'], ')'], '->',
+          ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+           ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+           'OUTCOME', 'O1'], ';', 'IF', 'O1', 'THEN', [
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O2'], '||',
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O3']], 'ELSE IF', 'O1', 'THEN', [
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O4'], '||',
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O5']], 'ELSE IF', 'O1', 'THEN', [
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O6'], '||',
+              ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+               ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
+               'OUTCOME', 'O7']], 'ELSE', [[['DO', 'Block', 'ON', 'flows', 'OF',
+                                             ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+                                             ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING',
+                                             'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O8'], '||',
+                                            ['DO', 'Block', 'ON', 'flows', 'OF',
+                                             ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+                                             ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING',
+                                             'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O9']], ';',
+                                           ['DO', 'Block', 'ON', 'flows', 'OF',
+                                            ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
+                                            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING',
+                                            'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O10']]]
 
 
 # def buildParseTree(fpexp):
@@ -90,7 +125,10 @@ def is_nested(i_list):
     return False
 
 
-def build_parse_tree(clips_list, root):
+def build_parse_tree(clips_list, root=currentTree):
+    # if not is_nested(clips_list):
+    #     root.setRootVal(clips_list)
+    #     return root
     left, operator, right = clips_list[0], clips_list[1], clips_list[2]
     # left
     root.insertLeft('')
@@ -108,6 +146,8 @@ def build_parse_tree(clips_list, root):
         build_parse_tree(right, root.getRightChild())
     else:
         root.getRightChild().setRootVal(right)
+
+    return root
 
 
 def list_to_postfix_updated(input_list):
@@ -210,6 +250,33 @@ def list_to_postfix(input_list):
                 # eTree.postorder()
 
 
+def clips_policy_list_to_parse_tree(c_list, currentTree):
+    for token in c_list:
+        if token not in operators and token not in if_then_else:
+            currentTree.insertLeft('')
+            # pStack.push(currentTree)
+            # currentTree = currentTree.getLeftChild()
+            if is_nested_updated(token):
+                build_parse_tree(token, currentTree.getLeftChild())
+            else:
+                currentTree.getLeftChild().setRootVal(token)
+        else:
+            if token in operators:
+                # parent = pStack.pop()
+                # currentTree = parent
+                currentTree.setRootVal(token)
+                currentTree.insertRight('')
+                currentTree = currentTree.getRightChild()
+            else:
+                if currentTree.getRootVal() == '':
+                    currentTree.setRootVal(token)
+                    pStack.push(currentTree)
+                else:
+                    currentTree.insertRight('')
+                    currentTree = currentTree.getRightChild()
+                    currentTree.setRootVal(token)
+
+
 if __name__ == '__main__':
     # input_list = [
     #     [
@@ -259,7 +326,7 @@ if __name__ == '__main__':
         ],
     ]
 
-    # list1 = ['1', '2', '3']
+    list1 = ['1', '2', '3']
     # str1 = ''.join(list1)
     # print(str1)
 
@@ -268,5 +335,5 @@ if __name__ == '__main__':
     # eTree.postorder()
     # print(is_nested_list([1, 2, 3]))
     build_parse_tree(a_list, currentTree)
-    # build_parse_tree(input_list, currentTree)
+    # build_parse_tree(list1, currentTree)
     eTree.postorder()
