@@ -105,7 +105,7 @@ def policy_parser():
 
     keyword = oneOf('DO ON OF BY USING FOR OUTCOME UNTIL')
     goal = identifier
-    event__exp = Forward()
+    event_exp = Forward()
     do_action = 'DO' + action
     on_object = 'ON' + object
     of_obj_attribute_values = 'OF' + obj_attribute_values
@@ -119,7 +119,8 @@ def policy_parser():
     #               Optional('USING' + action_attribution) + Optional('FOR' + goal) + Optional(
     #     'OUTCOME' + value)
 
-    action_spec = do_action + Optional(on_object) + Optional(of_obj_attribute_values) + Optional(by_actuator_spec) + Optional(using_action_attribution) + Optional(for_goal) + outcome_value
+    action_spec = do_action + Optional(on_object) + Optional(of_obj_attribute_values) + Optional(
+        by_actuator_spec) + Optional(using_action_attribution) + Optional(for_goal) + outcome_value
 
     # action_spec = 'DO' + action + 'ON' + object + 'OF' + obj_attribute_values + 'BY' + actuator_spec + 'USING' \
     #               + action_attribution + 'FOR' + goal
@@ -137,9 +138,10 @@ def policy_parser():
     coas = Forward()
     coas << (ZeroOrMore(lparen) + (Group(delimitedList(action_spec)) + operator + coas) + ZeroOrMore(rparen)
              | Group(delimitedList(action_spec)))
+
     # coas << (Optional('(') + (Group(delimitedList(action_spec)) + operator + coas) + Optional(')')
     #          | Optional('(') + Group(delimitedList(action_spec))) + Optional(')')
-             # | (Group(delimitedList(coas))) + operator + Group(delimitedList(coas)))
+    # | (Group(delimitedList(coas))) + operator + Group(delimitedList(coas)))
 
     # print(coas.parseString(
     #     'DO CheckUDPICMPFlows ON flows BY IDS USING rate > 50% OUTCOME P && P <> ∅'))
@@ -153,7 +155,8 @@ def policy_parser():
 
     # COA SPEC
     # ca_spec = (Optional('ELSE') + 'IF' + Optional(OneOrMore(lparen)) + coas + Optional(OneOrMore(rparen)) + 'THEN' + coas) | ('ELSE' + coas) | coas
-    ca_spec = coas | 'IF' + ZeroOrMore(lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE IF' + ZeroOrMore(lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE' + coas
+    ca_spec = coas | 'IF' + ZeroOrMore(lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE IF' + ZeroOrMore(
+        lparen) + coas + ZeroOrMore(rparen) + 'THEN' + coas | 'ELSE' + coas
 
     # ca_spec = Optional('ELSE') + 'IF' + lparen + coas + rparen + 'THEN' + coas | 'ELSE' + coas
     coas_spec = Group(delimitedList(ca_spec))
@@ -261,143 +264,6 @@ def policy_parser():
         parsed_policy = rule.parseString(policy_string)
         for rule in parsed_policy:
             print(rule)
-
-    '''
-    (Link-Flooded(T,L)) ->DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1 || (DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1 ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1)
-    
-
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        '||', 
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O1'],
-            ';',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O1']
-        ]
-    ]
-    
-    (Link-Flooded(T,L)) ->DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1 || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1 ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1>
-			USING deny-command FOR PREVENT OUTCOME O1
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        '||',
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O1'],
-            ';',
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O1']
-        ]
-    ]
-
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        '||',
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-            ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-            'PREVENT', 'OUTCOME', 'O1'],
-            ';',
-            [
-                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                'PREVENT', 'OUTCOME', 'O1'],
-                'OR',
-                 ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                 ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                 'PREVENT', 'OUTCOME', 'O1']
-            ]
-        ]
-    ]
-
-
-    '''
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        '||',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                    ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                    'PREVENT', 'OUTCOME', 'O1'],
-        ';',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        'OR', 'DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-         'O1'
-    ]
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        '||',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                    ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                    'PREVENT', 'OUTCOME', 'O1'],
-        ';',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1'],
-        'OR',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-                    ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR',
-                    'PREVENT', 'OUTCOME', 'O1']
-    ]
-
-    ['Link-Flooded', '(', ['T'], ['L'], ')']
-    # ->
-    ['IF',
-        ['DO', 'CheckUDPICMPFlows', 'ON', 'flows', 'BY', 'IDS', 'USING', ['rate', '>', '50%'], 'OUTCOME',
-            ['P', '&&', 'P', '<>', '0']],
-    'THEN',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-        ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-        'O1']
-    ]
-
-    ['ELSE IF',
-        ['DO', 'CheckElephantTCPFlow', 'ON', 'flows', 'BY', 'IDS-App', 'USING', ['rate', '>', '90%'], 'FOR', 'DETECT',
-      'OUTCOME', ['E', '&&', 'E', '<>', '0']],
-     'THEN',
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['E'], 'BY', ['FIREWALL', '<', ['1', '.', '5', '.', '6', '.', '4'],
-        ['admin'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
-     ]
-    ['ELSE IF', ['DO', 'CheckNewComers', 'ON', 'flows', 'BY', 'IDS-App', 'USING', ['window', '<', '1'], 'OUTCOME',
-                 ['N', 'rate', '&&', 'rate', '>', '75%']], 'THEN',
-     ['DO', 'Rereoute', 'ON', 'flows', 'OF', ['src_ip', '=', 'N'], 'BY', 'ROUTER', 'USING', 'RRM', 'OUTCOME', 'O3']]
-    ['ELSE IF', ['DO', 'CheckWhiteListed', 'ON', 'flows', 'OF', ['src_ip', '=', 'WHITE-LIST'], 'BY', 'IDS-1', 'USING',
-                 'check-list-API', 'OUTCOME', ['W', '&&', 'W', '=', '0']], 'THEN',
-     ['DO', 'Restrict', 'ON', 'flows', 'OF', ['src_ip', '=', 'W'], 'BY', 'ROUTER', 'USING', 'BW-limit-command',
-      'OUTCOME', 'O4']]
-    ['ELSE',
-     ['DO', 'Replicate', 'ON', 'services', 'OF', ['Reachable', '(', ['L'], ')', '&&', 'dport', '=', 80], 'USING',
-      'replicate-command', 'OUTCOME', 'O5']]
-
-    ['(', ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-           ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT',
-           'OUTCOME', 'O1'], '||',
-     ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY',
-      ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME',
-      'O1'], ')']
 
 
 if __name__ == '__main__':
