@@ -1,3 +1,5 @@
+import pprint
+
 from pyparsing import Word, nums, alphas, alphanums, Forward, delimitedList, Group, oneOf, srange, Optional, OneOrMore, \
     Combine, ZeroOrMore, infixNotation, opAssoc
 from pythonds import BinaryTree
@@ -108,8 +110,9 @@ def policy_parser():
     for_goal = 'FOR' + goal
     outcome_value = 'OUTCOME' + value
 
-    action_spec = do_action + Optional(on_object) + Optional(of_obj_attribute_values) + Optional(
-        by_actuator_spec) + Optional(using_action_attribution) + Optional(for_goal) + outcome_value
+    # action_spec = do_action + Optional(on_object) + Optional(of_obj_attribute_values) + Optional(
+    #     by_actuator_spec) + Optional(using_action_attribution) + Optional(for_goal) + outcome_value
+    action_spec = do_action + on_object + of_obj_attribute_values +by_actuator_spec + using_action_attribution + for_goal + outcome_value
     action_spec = Group(delimitedList(action_spec))
     # print(action_spec.parseString(
     #     'DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1'))
@@ -144,18 +147,41 @@ def policy_parser():
                              (oneOf('OR ||'), 2, opAssoc.LEFT),
                              (oneOf('&& ;'), 2, opAssoc.LEFT),
                          ])
+
+    # coas = Forward()
+    # coas = action_spec ^ action_spec + operator + coas
+
+    # print(coas.parseString("""
+    #         DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+    #         || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3"""))
+
     if_then_clause = 'IF' + ZeroOrMore(lparen) + identifier + ZeroOrMore(rparen) + 'THEN'
     else_if_then_clause = "ELSE IF" + ZeroOrMore(lparen) + identifier + ZeroOrMore(rparen) + 'THEN'
 
-    coas_spec = action_spec + operator + if_then_clause + coas + ZeroOrMore(else_if_then_clause + coas) + 'ELSE' \
-                + coas | coas
+    # coas_spec = Group(delimitedList(action_spec + operator + if_then_clause + coas + ZeroOrMore(else_if_then_clause + coas) + 'ELSE' \
+    #             + coas)) | coas
+
+    coas_spec = Forward()
+    if_then_else = 'IF' + identifier + 'THEN' + Group(delimitedList(coas_spec)) + 'ELSE' + Group(delimitedList(coas_spec))
+    coas_spec <<  (if_then_else ^ coas)
+    # print(coas_spec.parseString("""IF O1 THEN DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+    #
+    #
+    #                                 ELSE IF O1 THEN
+    #                                             DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
+    #                                             || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
+    #                                 ELSE
+    #                                     DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
+    #                                     || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9"""))
+
+
 
     temp_context_exp = func_call
     config_context_exp = func_call
     dynamic_context_exp = func_call
     context_exp = Group(temp_context_exp | config_context_exp | dynamic_context_exp).setName('exp')
 
-    rule = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + coas_spec
+    rule = ZeroOrMore(lparen) + context_exp + ZeroOrMore(rparen) + operator + Group(delimitedList(coas_spec))
 
     policy_string = ''
     with open('policy_2.txt') as f:
@@ -164,13 +190,16 @@ def policy_parser():
         # print(policy_string)
 
     parsed_policy = rule.parseString(policy_string)
-    # print(parsed_policy)
+    pp = pprint.PrettyPrinter(indent=4)
+    # pp.pprint(parsed_policy)
+    print(parsed_policy)
     # for rule in parsed_policy:
     #     print(rule)
 
     # e_tree = BinaryTree('')
-    converter.clips_policy_list_to_parse_tree(parsed_policy, converter.currentTree)
-    converter.eTree.inorder()
+    # converter.clips_policy_list_to_parse_tree(parsed_policy, converter.currentTree)
+    # converter.eTree.inorder()
+    # converter.eTree.preorder()
 
     # temp_context_exp = func_call
     # config_context_exp = func_call
