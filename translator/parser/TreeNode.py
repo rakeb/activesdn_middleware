@@ -9,7 +9,6 @@ class TreeNode(NodeMixin):
         self.name = name
         self.parent = parent
 
-
     def getName(self):
         return self.name
 

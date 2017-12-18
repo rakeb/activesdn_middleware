@@ -41,23 +41,3 @@ dictEntry = Group(listItem + colon + listItem)
 dictStr << (lbrace + Optional(delimitedList(dictEntry) + \
                               Optional(Suppress(","))) + rbrace)
 dictStr.setParseAction(cvtDict)
-
-# tests = """['a', 100, ('A', [101,102]), 3.14, [ +2.718, 'xyzzy', -1.414] ]
-#            [{0: [2], 1: []}, {0: [], 1: [], 2: []}, {0: [1, 2]}]
-#            { 'A':1, 'B':2, 'C': {'a': 1.2, 'b': 3.4} }
-#            3.14159
-#            42
-#            6.02E23
-#            6.02e+023
-#            1.0e-7
-#            'a quoted string'""".split("\n")
-#
-# for test in tests:
-#     print("Test:", test.strip())
-#     result = listItem.parseString(test)[0]
-#     print("Result:", result)
-#     try:
-#         for dd in result:
-#             if isinstance(dd, dict): print(dd.items())
-#     except TypeError as te:
-#         pass
