@@ -1,0 +1,99 @@
+(Link-Flooded(T,L)) ->
+    IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+
+    ELSE IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
+
+    ELSE IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O6
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O7
+        && DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
+
+    ELSE
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9
+        ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O10
+
+
+
+[
+    ['Link-Flooded', '(', ['T'], ['L'], ')'],
+    '->',
+    [
+        'IF',
+        'O1',
+        'THEN',
+        [
+            [
+                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2'],
+                 '||',
+                 ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O3']
+             ]
+        ],
+        'ELSE',
+        [
+            'IF',
+            'O1',
+            'THEN',
+            [
+                [
+                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O4'],
+                    '||',
+                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O5']
+                ]
+            ],
+            'ELSE',
+            [
+                'IF',
+                'O1',
+                'THEN',
+                [
+                    [
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O6'],
+                        '||',
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O7']
+                    ]
+                ],
+                'ELSE',
+                [
+                    [
+                        [
+                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O8'],
+                            '||',
+                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O9']
+                        ],
+                        ';',
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O10']
+                    ]
+                ]
+            ]
+        ]
+    ]
+]
+
+
+(Link-Flooded(T,L)) ->
+    IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3
+
+    ELSE IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
+
+    ELSE IF O1
+        THEN
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O6
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O7
+
+    ELSE
+        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
+        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9
+        ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O10
