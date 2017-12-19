@@ -1,11 +1,13 @@
-from translator.parser.TreeNode import TreeNode
+from translator.parser.classes.TreeNode import TreeNode
 
 
 class ActionSpecClass(TreeNode):
-    # body = None
-    #
+    def parseBody(self):
+        pass
+
     def setBody(self, body):
         self.body = body
+        self.parseBody()
 
     def __str__(self):
         print("ActionSpecClass")

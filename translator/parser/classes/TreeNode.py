@@ -9,6 +9,13 @@ class TreeNode(NodeMixin):
         self.name = name
         self.parent = parent
 
+    def parseBody(self):
+        pass
+
+    def setBody(self, body):
+        self.body = body
+        self.parseBody()
+
     def getName(self):
         return self.name
 

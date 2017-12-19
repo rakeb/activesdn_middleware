@@ -1,4 +1,4 @@
-from translator.parser.TreeNode import TreeNode
+from translator.parser.classes.TreeNode import TreeNode
 
 
 class ProcedureRule(TreeNode):
