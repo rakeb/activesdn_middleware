@@ -1,0 +1,81 @@
+(Link-Flooded(T,L)) ->
+    DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
+    ;
+    IF O1
+        THEN
+        DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+    ELSE
+        DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3
+        ;
+        IF O3
+            THEN
+            DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
+            || DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
+        ELSE
+            DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O6
+            ;
+            IF O6
+                THEN
+                DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O7
+                || DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
+            ELSE
+            DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9
+            || DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O10
+            && DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O11
+
+[
+    ['Link-Flooded', '(', ['T'], ['L'], ')'],
+    '->',
+    [
+        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1'],
+        ';',
+        'IF',
+        'O1',
+        'THEN',
+        [
+            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
+        ],
+        'ELSE',
+        [
+            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O3'],
+            ';',
+            'IF',
+            'O3',
+            'THEN',
+            [
+                [
+                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O4'],
+                    '||',
+                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O5']
+                ]
+            ],
+            'ELSE',
+            [
+                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O6'],
+                ';',
+                'IF',
+                'O6',
+                'THEN',
+                [
+                    [
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O7'],
+                        '||',
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O8']
+                    ]
+                ],
+                'ELSE',
+                [
+                    [
+                        [
+                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O9'],
+                            '||',
+                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O10']
+                        ],
+                        '&&',
+                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O11']
+                    ]
+                ]
+            ]
+        ]
+    ]
+]

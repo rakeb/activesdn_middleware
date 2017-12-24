@@ -1,157 +1,75 @@
 (Link-Flooded(T,L)) ->
-    DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
+    DO CheckUDPICMPFlows ON flows OF (proto=ICMP or UDP in P) BY IDS USING rate > 50% FOR DETECT OUTCOME P
     ;
-    IF O1
+    IF P
         THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
-
-    ELSE IF O2
-        THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
-
-    ELSE IF O5
-        THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O6
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O7
-        && DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
-
-    ELSE
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9
-        ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O10
-
-
+        DO Block ON flows OF (proto=ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
+	ELSE
+	    DO CheckElephantTCPFlow ON flows OF (proto=TCP in E) BY IDS USING rate > 90% FOR DETECT OUTCOME E
+	    ;
+	    IF E
+	        THEN
+			DO Block ON flows OF (proto=TCP in E) BY FIREWALL<1.5.6.4, admin> USING deny-command FOR PREVENT OUTCOME O2
+	    ELSE
+	        DO CheckNewComers ON flows OF (src_ip ∈ N) BY IDS USING window < 1 FOR DETECT OUTCOME N, rate
+	        ;
+	        IF rate > 75%
+	            THEN
+			    DO Reroute ON flows OF (src_ip ∈ N) BY ROUTER USING path-mutation FOR DETERRENCE OUTCOME O3
+	        ELSE
+	            DO CheckWhiteListed ON flows OF (src_ip ∈ WHITE-LIST) BY IDS-1 USING check-list-API FOR DETERRENCE OUTCOME W
+                ;
+                IF W
+                    THEN
+                    DO Restrict ON flows OF src_ip ∉ W BY ROUTER USING BW-limit-command FOR DETERRENCE OUTCOME O4
+                    ELSE
+                    DO Replicate ON services OF (Reachable(L) && dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O5
 
 [
     ['Link-Flooded', '(', ['T'], ['L'], ')'],
     '->',
     [
-        'IF',
-        'O1',
-        'THEN',
-        [
-            [
-                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2'],
-                 '||',
-                 ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O3']
-             ]
-        ],
-        'ELSE',
-        [
-            'IF',
-            'O1',
-            'THEN',
-            [
-                [
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O4'],
-                    '||',
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O5']
-                ]
-            ],
-            'ELSE',
-            [
-                'IF',
-                'O1',
-                'THEN',
-                [
-                    [
-                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O6'],
-                        '||',
-                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O7']
-                    ]
-                ],
-                'ELSE',
-                [
-                    [
-                        [
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O8'],
-                            '||',
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O9']
-                        ],
-                        ';',
-                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O10']
-                    ]
-                ]
-            ]
-        ]
-    ]
-]
-
-
-(Link-Flooded(T,L)) ->
-    IF O1
-        THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O3
-
-    ELSE IF O1
-        THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O4
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O5
-
-    ELSE IF O1
-        THEN
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O6
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O7
-
-    ELSE
-        DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O8
-        || DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O9
-        ; DO Block ON flows OF  (proto=CIMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O10
-
-
-
-[
-    ['Link-Flooded', '(', ['T'], ['L'], ')'],
-    '->',
-    [
-        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1'],
+        ['DO', 'CheckUDPICMPFlows', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', 'IDS', 'USING', ['rate', '>', '50%'], 'FOR', 'DETECT', 'OUTCOME', 'P'],
         ';',
         'IF',
-        'O1',
+        'P',
         'THEN',
         [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
+            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1']
         ],
         'ELSE',
         [
+            ['DO', 'CheckElephantTCPFlow', 'ON', 'flows', 'OF', ['proto', '=', 'TCP', 'in', 'E'], 'BY', 'IDS', 'USING', ['rate', '>', '90%'], 'FOR', 'DETECT', 'OUTCOME', 'E'],
+            ';',
             'IF',
-            'O2',
+            'E',
             'THEN',
             [
-                [
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O4'],
-                    '||',
-                    ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O5']
-                ]
+                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'TCP', 'in', 'E'], 'BY', ['FIREWALL', '<', ['1', '.', '5', '.', '6', '.', '4'], ['admin'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
             ],
             'ELSE',
             [
+                ['DO', 'CheckNewComers', 'ON', 'flows', 'OF', ['src_ip', '∈', 'N'], 'BY', 'IDS', 'USING', ['window', '<', '1'], 'FOR', 'DETECT', 'OUTCOME', 'N'],
+                ';',
                 'IF',
-                'O5',
+                'rate',
                 'THEN',
                 [
-                    [
-                        [
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O6'],
-                            '||',
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O7']
-                        ],
-                        '&&',
-                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1']
-                    ]
+                    ['DO', 'Reroute', 'ON', 'flows', 'OF', ['src_ip', '∈', 'N'], 'BY', 'ROUTER', 'USING', 'path-mutation', 'FOR', 'DETERRENCE', 'OUTCOME', 'O3']
                 ],
                 'ELSE',
                 [
+                    ['DO', 'CheckWhiteListed', 'ON', 'flows', 'OF', ['src_ip', '∈', 'WHITE-LIST'], 'BY', 'IDS-1', 'USING', 'check-list-API', 'FOR', 'DETERRENCE', 'OUTCOME', 'W'],
+                    ';',
+                    'IF',
+                    'W',
+                    'THEN',
                     [
-                        [
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O8'],
-                            '||',
-                            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O9']
-                        ],
-                        ';',
-                        ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'CIMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O10']
+                        ['DO', 'Restrict', 'ON', 'flows', 'OF', ['src_ip', '∉', 'W'], 'BY', 'ROUTER', 'USING', 'BW-limit-command', 'FOR', 'DETERRENCE', 'OUTCOME', 'O4']
+                    ],
+                    'ELSE',
+                    [
+                        ['DO', 'Replicate', 'ON', 'services', 'OF', ['Reachable', '(', ['L'], ')', '&&', 'dport', '=', 80], 'BY', 'Controller', 'USING', 'replicate-command', 'FOR', 'DETERRENCE', 'OUTCOME', 'O5']
                     ]
                 ]
             ]

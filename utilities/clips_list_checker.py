@@ -13,6 +13,13 @@ def is_action_spec(list_body):
     return False
 
 
+def is_list_multi_dimension(list_body):
+    if len(list_body) == 1:
+        if type(list_body[0]) == list:
+            return True
+    return False
+
+
 def is_action_spec_followed_by_coas(list_body):
     if len(list_body) == 8:
         if list_body[0][0] == 'DO' and list_body[1] in operators and list_body[2] == 'IF':

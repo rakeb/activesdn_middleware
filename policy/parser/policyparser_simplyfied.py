@@ -51,9 +51,9 @@ def policy_parser():
     # BY FIREWALL < 1.5.6.4, “admin” >
     as_using_param = identifier + '<' + delimitedList(Group(func_arg)) + '>'
     actuator_spec = identifier ^ delimitedList(Group(as_using_param))
-    # print(actuator_spec.parseString('IDS-App'))
-    # print(actuator_spec.parseString('Switch < 1.1.1.1 >'))
-    # print(actuator_spec.parseString('FIREWALL < 1, admin >'))
+    print(actuator_spec.parseString('IDS-App'))
+    print(actuator_spec.parseString('Switch < 1.1.1.1 >'))
+    print(actuator_spec.parseString('FIREWALL < 1.1.1.1, admin >'))
 
     # Object = oneOf('files flows links machines')
     object = identifier
@@ -192,7 +192,7 @@ def policy_parser():
     parsed_policy = rule.parseString(policy_string)
     pp = pprint.PrettyPrinter(indent=4)
     # pp.pprint(parsed_policy)
-    print(parsed_policy)
+    # print(parsed_policy)
     # for rule in parsed_policy:
     #     print(rule)
 

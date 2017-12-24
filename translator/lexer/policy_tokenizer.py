@@ -66,9 +66,9 @@ def policy_lexer(file_name='rule.txt'):
 
     action = config_action | investigation_action
 
-    outcome_value = delimitedList(func_arg) + operator + comparison_expr
+    outcome_value = delimitedList(func_arg) + operator + comparison_expr ^ func_arg
     value = delimitedList(Group(outcome_value)) | identifier
-    # print(Value.parseString('P,l  && P <> 0'))
+    # print(value.parseString('P,l  && P <> 0'))
 
     # OF(proto=ICMP or UDP in P)
     # OF E
@@ -115,10 +115,10 @@ def policy_lexer(file_name='rule.txt'):
                          ])
 
     coas_spec = Forward()
-    if_then_else = 'IF' + identifier + 'THEN' + Group(delimitedList(coas_spec)) + 'ELSE' + Group(
+    if_then_else = 'IF' + Group(delimitedList(identifier^comparison_expr)) + 'THEN' + Group(delimitedList(coas_spec)) + 'ELSE' + Group(
         delimitedList(coas_spec))
     # coas_spec << (if_then_else ^ coas)
-    coas_spec << ((coas + operator + if_then_else) ^ if_then_else ^ coas)
+    coas_spec << ((coas + operator + if_then_else) ^ (if_then_else) ^ (coas))
 
     temp_context_exp = func_call
     config_context_exp = func_call
@@ -134,7 +134,7 @@ def policy_lexer(file_name='rule.txt'):
         # print(policy_string)
 
     parsed_policy = rule.parseString(policy_string)
-
+    # print(parsed_policy)
     return parsed_policy
 
 

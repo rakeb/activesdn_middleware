@@ -1,0 +1,23 @@
+(Link-Flooded(T,L)) ->
+    DO CheckUDPICMPFlows ON flows OF (proto=ICMP or UDP in P) BY IDS USING rate > 50% FOR DETECT OUTCOME P
+    ;
+	IF (P) THEN
+			DO Block ON flows OF (proto=ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT
+
+	ELSE IF (DO CheckElephantTCPFlow ON flows BY IDS USING rate > 90%
+		FOR DETECT OUTCOME E && E <> ∅) THEN
+			DO Block ON flows OF (proto=TCP in E) BY FIREWALL<1.5.6.4, “admin”>
+			USING deny-command FOR PREVENT
+
+	ELSE IF (DO CheckNewComers ON flows BY IDS USING window < 1
+		 FOR DETECT OUTCOME N, rate && rate > 75%) THEN
+			DO Reroute ON flows OF (src_ip ∈ N) BY ROUTER
+			USING path-mutation<> FOR DETERRENCE
+
+	ELSE IF (DO CheckWhiteListed ON flows OF (src_ip ∈ WHITE-LIST) BY IDS-1
+		USING check-list-API  OUTCOME W && W <> ∅)  THEN
+			DO Restrict ON flows OF src_ip ∉ W BY ROUTER
+			USING BW-limit-command
+	ELSE /* there is no a whitelist*/
+		DO Replicate ON services OF (Reachable(L) and dport=80) BY Controller
+		USING replicate-command<newloc> /* create new cluster*

@@ -1,0 +1,16 @@
+(Link-Flooded(T,L)) ->
+    DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
+    ;
+    DO Block ON flows OF (proto= ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O2
+
+[
+    ['Link-Flooded', '(', ['T'], ['L'], ')'],
+    '->',
+    [
+        [
+            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1'],
+            ';',
+            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
+        ]
+    ]
+]
