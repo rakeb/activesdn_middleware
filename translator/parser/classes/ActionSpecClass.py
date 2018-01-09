@@ -1,3 +1,5 @@
+import itertools
+
 from translator.parser.classes.AsAttributes import ObjectAttributesValues, ActuatorSpec, ActionAttribution
 from translator.parser.classes.TreeNode import TreeNode
 
@@ -11,6 +13,13 @@ class ActionSpecClass(TreeNode):
     forAttribute = None
     outcomeAttribute = None
     untilAttribute = None
+    newId = itertools.count()
+    pFact = None
+
+    def __init__(self, name, parent):
+        super().__init__(name, parent)
+        self.id = next(self.newId)
+        # print("Name: %s, ID %d" %(name, self.id))
 
     def parseBody(self):
         # set DO
@@ -43,11 +52,27 @@ class ActionSpecClass(TreeNode):
 
         # set OUTCOME
         outcome_atr_index = self.body.index('OUTCOME') + 1
-        self.forAttribute = self.body[outcome_atr_index]
+        self.outcomeAttribute = self.body[outcome_atr_index]
+
+    def prologFact(self):
+        #                          id,do, on, of, by, using,for, outcome
+        self.pFact = 'action_spec(%s, %s, %s, %s, %s, %s, %s, %s).' % (
+        self.id, self.doAttribute, self.onAttribute, self.ofAttribute.prologFact(), self.byAttribute.prologFact(),
+        self.usingAttribute.prologFact(), self.forAttribute, self.outcomeAttribute)
+
+        self.pFact = self.pFact.lower()
+
+        f = open("prolog.pl", "a")
+        f.write(self.pFact)
+        f.write("\n")
+        f.close()
+
+        # print("AS : ", self.pFact)
 
     def setBody(self, body):
         self.body = body
         self.parseBody()
+        self.prologFact()
 
     def __str__(self):
         print("ActionSpecClass")

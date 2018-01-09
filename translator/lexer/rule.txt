@@ -1,13 +1,13 @@
 (Link-Flooded(T,L)) ->
     DO CheckUDPICMPFlows ON flows OF (proto=ICMP or UDP in P) BY IDS USING rate > 50% FOR DETECT OUTCOME P
     ;
-    IF P
+    IF P <> 0
         THEN
         DO Block ON flows OF (proto=ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
 	ELSE
 	    DO CheckElephantTCPFlow ON flows OF (proto=TCP in E) BY IDS USING rate > 90% FOR DETECT OUTCOME E
 	    ;
-	    IF E
+	    IF E <> 0
 	        THEN
 			DO Block ON flows OF (proto=TCP in E) BY FIREWALL<1.5.6.4, admin> USING deny-command FOR PREVENT OUTCOME O2
 	    ELSE
@@ -19,60 +19,8 @@
 	        ELSE
 	            DO CheckWhiteListed ON flows OF (src_ip ∈ WHITE-LIST) BY IDS-1 USING check-list-API FOR DETERRENCE OUTCOME W
                 ;
-                IF W
+                IF W <> 0
                     THEN
                     DO Restrict ON flows OF src_ip ∉ W BY ROUTER USING BW-limit-command FOR DETERRENCE OUTCOME O4
                     ELSE
-                    DO Replicate ON services OF (Reachable(L) && dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O5
-
-[
-    ['Link-Flooded', '(', ['T'], ['L'], ')'],
-    '->',
-    [
-        ['DO', 'CheckUDPICMPFlows', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', 'IDS', 'USING', ['rate', '>', '50%'], 'FOR', 'DETECT', 'OUTCOME', 'P'],
-        ';',
-        'IF',
-        'P',
-        'THEN',
-        [
-            ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'ICMP', 'or', 'UDP', 'in', 'P'], 'BY', ['Switch', '<', ['1', '.', '1', '.', '1', '.', '1'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O1']
-        ],
-        'ELSE',
-        [
-            ['DO', 'CheckElephantTCPFlow', 'ON', 'flows', 'OF', ['proto', '=', 'TCP', 'in', 'E'], 'BY', 'IDS', 'USING', ['rate', '>', '90%'], 'FOR', 'DETECT', 'OUTCOME', 'E'],
-            ';',
-            'IF',
-            'E',
-            'THEN',
-            [
-                ['DO', 'Block', 'ON', 'flows', 'OF', ['proto', '=', 'TCP', 'in', 'E'], 'BY', ['FIREWALL', '<', ['1', '.', '5', '.', '6', '.', '4'], ['admin'], '>'], 'USING', 'deny-command', 'FOR', 'PREVENT', 'OUTCOME', 'O2']
-            ],
-            'ELSE',
-            [
-                ['DO', 'CheckNewComers', 'ON', 'flows', 'OF', ['src_ip', '∈', 'N'], 'BY', 'IDS', 'USING', ['window', '<', '1'], 'FOR', 'DETECT', 'OUTCOME', 'N'],
-                ';',
-                'IF',
-                'rate',
-                'THEN',
-                [
-                    ['DO', 'Reroute', 'ON', 'flows', 'OF', ['src_ip', '∈', 'N'], 'BY', 'ROUTER', 'USING', 'path-mutation', 'FOR', 'DETERRENCE', 'OUTCOME', 'O3']
-                ],
-                'ELSE',
-                [
-                    ['DO', 'CheckWhiteListed', 'ON', 'flows', 'OF', ['src_ip', '∈', 'WHITE-LIST'], 'BY', 'IDS-1', 'USING', 'check-list-API', 'FOR', 'DETERRENCE', 'OUTCOME', 'W'],
-                    ';',
-                    'IF',
-                    'W',
-                    'THEN',
-                    [
-                        ['DO', 'Restrict', 'ON', 'flows', 'OF', ['src_ip', '∉', 'W'], 'BY', 'ROUTER', 'USING', 'BW-limit-command', 'FOR', 'DETERRENCE', 'OUTCOME', 'O4']
-                    ],
-                    'ELSE',
-                    [
-                        ['DO', 'Replicate', 'ON', 'services', 'OF', ['Reachable', '(', ['L'], ')', '&&', 'dport', '=', 80], 'BY', 'Controller', 'USING', 'replicate-command', 'FOR', 'DETERRENCE', 'OUTCOME', 'O5']
-                    ]
-                ]
-            ]
-        ]
-    ]
-]
+                    DO Replicate ON services OF (dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O5

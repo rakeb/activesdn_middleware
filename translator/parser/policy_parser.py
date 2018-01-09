@@ -113,16 +113,47 @@ def parse_tree(token_list):
     # parse_coas_spec(coas_spec, token_list[2])
 
 
+def write_file(l):
+    f = open("prolog.pl", "a")
+    f.write(l)
+    f.write("\n")
+    f.close()
+
+
+def generate_prolog(root, s_id, r_id):
+    x = root.children
+    as_id = None
+    condition = None
+    l_id = None
+    for node in x:
+        p_all_nodes = node.children
+        if node.name == 'op' and p_all_nodes:
+            for p_node in p_all_nodes:
+                if p_node.name == 'action_spec':
+                    as_id = p_node.id
+                elif p_node.name == 'if_node':
+                    condition = p_node.body
+                elif p_node.name == 'then_node':
+                    for as_node in p_node.children:
+                        l_id = as_node.id
+                elif p_node.name == 'else_node':
+                    generate_prolog(node, r_id, r_id + 1)
+            coa_if = 'coa_if(%s, %s, %s, %s, %s).' % (s_id, as_id, condition, l_id, r_id)
+            write_file(coa_if)
+        elif node.name != 'op' and node.children:
+            generate_prolog(node, s_id, r_id)
+
+
 def parser(filename='../lexer/rule.txt'):
     global rule
     token_list = policy_lexer(filename).asList()
     rule = TreeNode('rule')
     rule.body = token_list
     parse_tree(token_list)
+    generate_prolog(rule, 'rule', 1)
     for pre, _, node in RenderTree(rule):
         treestr = u"%s%s" % (pre, node.name)
         print(treestr.ljust(8), node.body)
-        # print(token_list)
 
 
 if __name__ == '__main__':
