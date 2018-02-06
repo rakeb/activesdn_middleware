@@ -8,6 +8,10 @@ from translator.parser.classes.TreeNode import TreeNode
 from utilities import clips_list_checker
 
 rule = None
+opDict = {
+    '||':'par',
+    ';':'seq'
+}
 
 
 def parse_nested_action_spec(root, list_body):
@@ -49,7 +53,7 @@ def parse_coas_spec(root, list_body):
         if_node = IfClass('if_node', parent=root)
         if_node.setBody(if_body_c)
 
-        then_node = TreeNode('then_node', parent=root)
+        then_node = TreeNode('then_node', parent=if_node)
         # # TODO need to check CoAs_Spec before consuming list
         # then_node.setBody(then_body_c[0])
         # parse_coas_spec(then_node, then_body_c[0])
@@ -57,7 +61,7 @@ def parse_coas_spec(root, list_body):
         then_node.setBody(then_body_c)
         parse_coas_spec(then_node, then_body_c)
 
-        else_node = TreeNode('else_node', parent=root)
+        else_node = TreeNode('else_node', parent=if_node)
         # # TODO again, the list consumtion is need to check
         # if else_body_c[0] != 'IF':
         #     else_body_c = else_body_c[0]
@@ -79,21 +83,21 @@ def parse_coas_spec(root, list_body):
         if_node = IfClass('if_node', parent=op)
         if_node.setBody(if_body_c)
 
-        then_node = TreeNode('then_node', parent=op)
+        # then_node = TreeNode('then_node', parent=if_node)
         # # TODO need to check CoAs_Spec before consuming list
         # then_node.setBody(then_body_c[0])
         # parse_coas_spec(then_node, then_body_c[0])
-        then_node.setBody(then_body_c)
-        parse_coas_spec(then_node, then_body_c)
+        # then_node.setBody(then_body_c)
+        parse_coas_spec(if_node, then_body_c)
 
-        else_node = TreeNode('else_node', parent=op)
+        # else_node = TreeNode('else_node', parent=if_node)
         # # TODO again, the list consumtion is need to check
         # if else_body_c[0][0] != 'DO':
         #     else_body_c = else_body_c[0]
         # else_node.setBody(else_body_c)
         # parse_coas_spec(else_node, else_body_c)
-        else_node.setBody(else_body_c)
-        parse_coas_spec(else_node, else_body_c)
+        # else_node.setBody(else_body_c)
+        parse_coas_spec(if_node, else_body_c)
 
 
 def parse_tree(token_list):
@@ -103,24 +107,21 @@ def parse_tree(token_list):
     event = EventClass('event', parent=rule)
     event.setBody(token_list[0])
 
-    op = TreeNode('op', parent=rule)
-    op.setBody(token_list[1])
+    # op = TreeNode('op', parent=rule)
+    # op.setBody(token_list[1])
 
-    coas_spec = TreeNode('coas_spec', parent=rule)
-    coas_spec.setBody(token_list[2])
+    # coas_spec = TreeNode('coas_spec', parent=rule)
+    # coas_spec.setBody(token_list[2])
 
-    parse_coas_spec(coas_spec, coas_spec.body)
+    parse_coas_spec(rule, token_list[2])
     # parse_coas_spec(coas_spec, token_list[2])
 
-
-def write_file(l):
-    f = open("prolog.pl", "a")
+def write_prolog_line(l):
+    global f
     f.write(l)
     f.write("\n")
-    f.close()
 
-
-def generate_prolog(root, s_id, r_id):
+def generate_prolog_ob(root, s_id, r_id):
     x = root.children
     as_id = None
     condition = None
@@ -137,25 +138,103 @@ def generate_prolog(root, s_id, r_id):
                     for as_node in p_node.children:
                         l_id = as_node.id
                 elif p_node.name == 'else_node' and p_node.children[0].name == 'op':
-                    generate_prolog(node, r_id, r_id + 1)
+                    generate_prolog_ob(node, r_id, r_id + 1)
                 elif p_node.name == 'else_node' and p_node.children[0].name == 'action_spec':
                     r_id = p_node.children[0].id
             coa_if = 'coa_if(coa_id_%s, %s, %s, %s, coa_id_%s).' % (s_id, as_id, condition, l_id, r_id)
-            write_file(coa_if)
+            write_prolog_line(coa_if)
         elif node.name != 'op' and node.children:
-            generate_prolog(node, s_id, r_id)
+            generate_prolog_ob(node, s_id, r_id)
+
+
+cnt = 1
+def generate_prolog(node):
+    global cnt
+    thenNode = None
+    elseNode = None
+    p_all_nodes = node.children
+    if node.name == 'op':
+        # Add support to have operation with more than two operands
+        opType = opDict[node.body]
+        left = generate_prolog(p_all_nodes[0])
+        right = generate_prolog(p_all_nodes[1])
+        label = 'op_' + str(cnt)
+        cnt += 1
+        write_prolog_line('coa(%s, %s, %s, %s).' % (label, opType, left, right))
+        return label
+    elif node.name == 'action_spec':
+        write_prolog_line(node.pFact)
+        return node.id
+    elif node.name == 'if_node':
+        label = 'if_' + str(cnt)
+        cnt += 1
+        condition = node.body
+        # if len(p_all_nodes) > 0:
+        # We should have only one child for this node
+        # Retrieve its ID
+        thenNode = generate_prolog(p_all_nodes[0])
+        # if len(p_all_nodes) > 1:
+        elseNode = generate_prolog(p_all_nodes[1])
+        coa_if = 'coa_if(%s, %s, %s, %s).' % (label, condition, thenNode, elseNode)
+        write_prolog_line(coa_if)
+        return label
+    elif node.name == 'rule':
+        label = 'rule_' + str(cnt)
+        event = generate_prolog(p_all_nodes[0])
+        coa = generate_prolog(p_all_nodes[1])
+        write_prolog_line('rule(%s, %s, %s).' % (label, event, coa))
+        return label
+    elif node.name == 'event':
+        label = 'evt_' + str(cnt)
+        write_prolog_line('event(%s, %s).' % (label, node.body))
+        return label
+    else:
+        for child in p_all_nodes:
+            generate_prolog(child)
+
+
+f = None
+
+
+def write_prolog_header():
+    write_prolog_line('op(seq).')
+    write_prolog_line('op(par).')
+
+
+def write_prolog_rules():
+    isCoa = '''isCoa(X):-
+	action_spec(X,_,_,_,_,_,_,_);
+	coa_if(X,_,Then,Else), isCoa(Then), isCoa(Else);
+	coa(X, OP, L, R), isCoa(L), isCoa(R), op(OP).'''
+
+    write_prolog_line(isCoa)
+
+    isRule = '''isRule(X):-
+    rule(X, Event, Op_Id),
+    event(Event,_),
+    isCoa(Op_Id).'''
+
+    write_prolog_line(isRule)
 
 
 def parser(filename='../lexer/rule.txt'):
     global rule
+    global f
     token_list = policy_lexer(filename).asList()
     rule = TreeNode('rule')
     rule.body = token_list
     parse_tree(token_list)
-    generate_prolog(rule, 'rule', 1)
+
     for pre, _, node in RenderTree(rule):
         treestr = u"%s%s" % (pre, node.name)
         print(treestr.ljust(8), node.body)
+
+    f = open("prolog.pl", "w")
+    # generate_prolog(rule, 'rule', 1)
+    write_prolog_header()
+    generate_prolog(rule)
+    write_prolog_rules()
+    f.close()
 
 
 if __name__ == '__main__':

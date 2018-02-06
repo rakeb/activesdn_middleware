@@ -62,10 +62,10 @@ class ActionSpecClass(TreeNode):
 
         self.pFact = self.pFact.lower()
 
-        f = open("prolog.pl", "a")
-        f.write(self.pFact)
-        f.write("\n")
-        f.close()
+        #f = open("prolog.pl", "a")
+        #f.write(self.pFact)
+        #f.write("\n")
+        #f.close()
 
         # print("AS : ", self.pFact)
 

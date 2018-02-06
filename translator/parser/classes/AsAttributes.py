@@ -16,7 +16,7 @@ class ObjectAttributesValues:
         self.value = self.body[2:len(self.body)]
 
     def prologFact(self):
-        self.pFact = "%s, %s" % (self.key, self.value)
+        self.pFact = "[%s, %s]" % (self.key, self.value)
         # print("fact: ", self.pFact)
         #TODO
         self.pFact = self.pFact.lower()
@@ -55,7 +55,7 @@ class ActuatorSpec:
         if self.credentials is not None:
             self.pFact += ", %s" % self.credentials
         # TODO
-        self.pFact = self.pFact.lower()
+        self.pFact = '['+self.pFact.lower()+']'
         # print("ActuatorSpec fact: ", self.pFact)
         return self.pFact
 
@@ -90,7 +90,7 @@ class ActionAttribution:
         if self.condition is not None:
             self.pFact += ", %s" % self.condition
         # TODO make lower here?
-        self.pFact = self.pFact.lower()
+        self.pFact = '['+self.pFact.lower()+']'
         # print("ActionAttribution fact: ", self.pFact)
         # return self.pFact
         return self.body
