@@ -136,9 +136,11 @@ def generate_prolog(root, s_id, r_id):
                 elif p_node.name == 'then_node':
                     for as_node in p_node.children:
                         l_id = as_node.id
-                elif p_node.name == 'else_node':
+                elif p_node.name == 'else_node' and p_node.children[0].name == 'op':
                     generate_prolog(node, r_id, r_id + 1)
-            coa_if = 'coa_if(%s, %s, %s, %s, %s).' % (s_id, as_id, condition, l_id, r_id)
+                elif p_node.name == 'else_node' and p_node.children[0].name == 'action_spec':
+                    r_id = p_node.children[0].id
+            coa_if = 'coa_if(coa_id_%s, %s, %s, %s, coa_id_%s).' % (s_id, as_id, condition, l_id, r_id)
             write_file(coa_if)
         elif node.name != 'op' and node.children:
             generate_prolog(node, s_id, r_id)

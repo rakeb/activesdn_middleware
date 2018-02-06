@@ -89,7 +89,8 @@ class ActionAttribution:
             self.pFact += ", %s" % self.operator
         if self.condition is not None:
             self.pFact += ", %s" % self.condition
-            # TODO
+        # TODO make lower here?
         self.pFact = self.pFact.lower()
         # print("ActionAttribution fact: ", self.pFact)
-        return self.pFact
+        # return self.pFact
+        return self.body

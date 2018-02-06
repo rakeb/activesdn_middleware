@@ -18,7 +18,7 @@ class ActionSpecClass(TreeNode):
 
     def __init__(self, name, parent):
         super().__init__(name, parent)
-        self.id = next(self.newId)
+        self.id = "as_id_" + str(next(self.newId))
         # print("Name: %s, ID %d" %(name, self.id))
 
     def parseBody(self):

@@ -19,14 +19,8 @@
 	        ELSE
 	            DO CheckWhiteListed ON flows OF (src_ip ∈ WHITE-LIST) BY IDS-1 USING check-list-API FOR DETERRENCE OUTCOME W
                 ;
-                IF W = 0
+                IF W <> 0
                     THEN
-                    DO Replicate ON services OF (dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O4
-                ELSE
-                    DO IsIngressLink ON link OF (link ∈ Path) BY Controller USING check-list-API FOR Management OUTCOME O5
-                    ;
-                    IF O5
-                        THEN
-                        DO MigrateService ON flows OF (src_ip ∈ W) BY Controller USING migrate-command FOR DETERRENCE OUTCOME O5
-                        ELSE
-                        DO Reroute ON flows OF (src_ip ∈ W) BY Switch USING mutate-path-command FOR DETERRENCE OUTCOME O6
+                    DO Restrict ON flows OF src_ip ∉ W BY ROUTER USING BW-limit-command FOR DETERRENCE OUTCOME O4
+                    ELSE
+                    DO Replicate ON services OF (dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O5
