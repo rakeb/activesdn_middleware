@@ -11,22 +11,23 @@
 	        THEN
 			DO Block ON flows OF (proto=TCP in E) BY FIREWALL<1.5.6.4, admin> USING deny-command FOR PREVENT OUTCOME O2
 	    ELSE
-	        DO CheckNewComers ON flows OF (src_ip ∈ N) BY IDS USING window < 1 FOR DETECT OUTCOME N, rate
+	        DO CheckNewComers ON flows OF (src_ip = N) BY IDS USING window < 1 FOR DETECT OUTCOME N, rate
 	        ;
+
 	        IF rate > 75%
 	            THEN
-			    DO Reroute ON flows OF (src_ip ∈ N) BY ROUTER USING path-mutation FOR DETERRENCE OUTCOME O3
+			    DO Reroute ON flows OF (src_ip = N) BY ROUTER USING path-mutation FOR DETERRENCE OUTCOME O3
 	        ELSE
-	            DO CheckWhiteListed ON flows OF (src_ip ∈ WHITE-LIST) BY IDS-1 USING check-list-API FOR DETERRENCE OUTCOME W
+	            DO CheckWhiteListed ON flows OF (src_ip = WHITE-LIST) BY IDS-1 USING check-list-API FOR DETERRENCE OUTCOME W
                 ;
                 IF W = 0
                     THEN
                     DO Replicate ON services OF (dport=80) BY Controller USING replicate-command FOR DETERRENCE OUTCOME O4
                 ELSE
-                    DO IsIngressLink ON link OF (link ∈ Path) BY Controller USING check-list-API FOR Management OUTCOME O5
+                    DO IsIngressLink ON link OF (link = Path) BY Controller USING check-list-API FOR Management OUTCOME O5
                     ;
                     IF O5
                         THEN
-                        DO MigrateService ON flows OF (src_ip ∈ W) BY Controller USING migrate-command FOR DETERRENCE OUTCOME O5
+                        DO MigrateService ON flows OF (src_ip = W) BY Controller USING migrate-command FOR DETERRENCE OUTCOME O5
                         ELSE
-                        DO Reroute ON flows OF (src_ip ∈ W) BY Switch USING mutate-path-command FOR DETERRENCE OUTCOME O6
+                        DO Reroute ON flows OF (src_ip = W) BY Switch USING mutate-path-command FOR DETERRENCE OUTCOME O6
