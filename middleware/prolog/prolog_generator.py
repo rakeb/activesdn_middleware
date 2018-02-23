@@ -65,7 +65,6 @@ def write_prolog_rules():
 		Action_X \= Action_Y.'''
     write_prolog_line(isShadowing)
 
-
     isConflict = '''isConflict(X,Y,O):-
             isRedundant(X,Y) -> write("Redundant (Sequential actions? Different rules? Action-level?)");
             isPermanentAccessconflict(X,Y) -> write("Permanent Access conflict: searilizability and consistency check (files or flows) on different switches have different action -> Action: select one actuator/action only  or give a priororty");
