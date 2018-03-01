@@ -65,12 +65,46 @@ def write_prolog_rules():
 		Action_X \= Action_Y.'''
     write_prolog_line(isShadowing)
 
-    isConflict = '''isConflict(X,Y,O):-
-            isRedundant(X,Y) -> write("Redundant (Sequential actions? Different rules? Action-level?)");
-            isPermanentAccessconflict(X,Y) -> write("Permanent Access conflict: searilizability and consistency check (files or flows) on different switches have different action -> Action: select one actuator/action only  or give a priororty");
-            isShadowing(X,Y) -> write("Rule Shadowing");
-            write("No Conflict!"), false.'''
-    write_prolog_line(isConflict)
+    isAsConflict = '''isAsConflict(X,Y):-
+        write(X), write(Y), 
+        isRedundant(X,Y), write("Redundant (Sequential actions? Different rules? Action-level?)");
+        isPermanentAccessconflict(X,Y), write("Permanent Access conflict: searilizability and consistency check (files or flows) on different switches have different action -> Action: select one actuator/action only  or give a priororty");
+        isShadowing(X,Y), write("Rule Shadowing");
+        write("No Conflict!").'''
+    write_prolog_line(isAsConflict)
+
+    findAsInCoA = '''findAsInCoA(X,I,F):-
+        (is_list(I) -> write('');append([],[],I)),
+        action_spec(X,_,_,_,_,_,_,_)-> (append(I,[X],F));
+        coa_if(X,_,Then,Else), findAsInCoA(Then,F1, F2),findAsInCoA(Else,F3, F4),
+        append(F2, F4, F);
+        coa(X, OP, L, R), findAsInCoA(L,F5, F6),findAsInCoA(R,F7, F8), op(OP),
+        append(F6, F8, F).'''
+    write_prolog_line(findAsInCoA)
+
+    isCoaConflict = '''isCoaConflict(X, Y):-
+        findAsInCoA(X, [], R1),
+        findAsInCoA(Y, [], R2),
+        crossChecking(R1, R2).'''
+    write_prolog_line(isCoaConflict)
+
+    crossChecking = '''crossChecking(L,R):-
+        findall([[X],[Y]], (member(X,L),member(Y,R)), O),
+        loopThrough(O).'''
+    write_prolog_line(crossChecking)
+
+    loopThrough = '''loopThrough([]).
+        loopThrough([[L|[R|_]]|T]) :-
+        nth0(0,L,L1),
+        nth0(0,R,R1),
+        isAsConflict(L1,R1),
+        loopThrough(T).'''
+
+    write_prolog_line(loopThrough)
+
+    cls = '''cls :- write('\e[H\e[2J').'''
+    write_prolog_line(cls)
+
 
 
 def generate_prolog(node):
