@@ -227,102 +227,77 @@ def checkElephantTcpFlow(switch_id, anomalous_threshold):
     print(r.text)
 
 
-'''
-	
-	rpc check-new-comers {
-		input {
-			leaf sliding-window-size {
-				type int32;
-			}
-			
-			leaf new-comer-threshold {
-				type int32;
-			}
-		}
-		
-		output {
-			leaf new-comer-ratio {
-//				type decimal64 {
-//					fraction-digits 2;
-//				}
-				type int32;
-			}
-		}
-	}
-	
-	rpc limit-flow {
-		input {
-			leaf switch-id {
-				type int32;
-			}
-			
-			leaf flooded-link {
-				type int32;
-			}
-			
-			leaf source-ip {
-				description "Source Ip Addresses";
-                type string {
-                    pattern
-					'(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/(([0-9])|([1-2][0-9])|(3[0-2]))';
-                }
-			}
-		}
-		
-		output {
-			leaf status {
-				type string;
-			}
-		}
-	}
-	
-	rpc block-flow {
-		input {
-			leaf switch-id {
-				type int32;
-			}
-			
-			leaf flow-id {
-				type string;
-			}
-			
-			leaf type {
-                type string;
-			}
-		}
-		
-		output {
-			leaf status {
-				type string;
-			}
-		}
-	}
-	
-	rpc find-potential-flooded-link {
-		input {
-			leaf message {
-				type string;
-			}
-		}
-		output {
-			leaf criticalLink {
-				type string;
-			}
-			leaf left-switch {
-    			type int32;
-    		}
-			leaf right-switch {
-    			type int32;
-    		}
-    		leaf left-switch-port {
-    			type int32;
-    		}
-    		leaf right-switch-port {
-    			type int32;
-    		}
-		}
-	}
-'''
+# rpc check-new-comers {
+# 		input {
+# 			leaf sliding-window-size {
+# 				type int32;
+# 			}
+#
+# 			leaf new-comer-threshold {
+# 				type int32;
+# 			}
+# 		}
+#
+# 		output {
+# 			leaf new-comer-ratio {
+# 				type int32;
+# 			}
+# 		}
+# 	}
+def checkNewComers(sliding_window_size, new_comer_threshold):
+    global auth, base_url
+    url = base_url + 'check-new-comers'
+    data = {
+        "input": {
+            "sliding-window-size": sliding_window_size,
+            "new-comer-threshold": new_comer_threshold,
+        }
+    }
+
+    r = post_request(url, data, auth)
+
+    print(r.text)
+
+
+# rpc limit-flow {
+# 		input {
+# 			leaf switch-id {
+# 				type int32;
+# 			}
+#
+# 			leaf flooded-link {
+# 				type int32;
+# 			}
+#
+# 			leaf source-ip {
+# 				description "Source Ip Addresses";
+#                 type string {
+#                     pattern
+# 					'(([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9][0-9]|2[0-4][0-9]|25[0-5])/(([0-9])|([1-2][0-9])|(3[0-2]))';
+#                 }
+# 			}
+# 		}
+#
+# 		output {
+# 			leaf status {
+# 				type string;
+# 			}
+# 		}
+# 	}
+def limitFlow(switch_id, flooded_link, source_ip):
+    global auth, base_url
+    url = base_url + 'limit-flow'
+    data = {
+        "input": {
+            "switch-id": switch_id,
+            "flooded-link": flooded_link,
+            "source-ip": source_ip,
+        }
+    }
+
+    r = post_request(url, data, auth)
+
+    print(r.text)
 
 
 # rpc find-potential-flooded-link {
@@ -355,7 +330,7 @@ def findPotentialFloodedLink():
     url = base_url + 'find-potential-flooded-link'
     data = {
         "input": {
-            "message": "hello"
+            "message": "find-potential-flooded-link"
         }
     }
 
@@ -409,8 +384,6 @@ if __name__ == '__main__':
     # blockFlow(1, '115', 'UDP')
     # checkElephantTcpFlow(1, 4)
     blockFlow(1, '75', 'Elephant')
-
-
 
 '''
 module activesdn {

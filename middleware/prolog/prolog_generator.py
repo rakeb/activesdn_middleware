@@ -94,11 +94,11 @@ def write_prolog_rules():
     write_prolog_line(crossChecking)
 
     loopThrough = '''loopThrough([]).
-        loopThrough([[L|[R|_]]|T]) :-
-        nth0(0,L,L1),
-        nth0(0,R,R1),
-        isAsConflict(L1,R1),
-        loopThrough(T).'''
+    loopThrough([[L|[R|_]]|T]):-
+            nth0(0,L,L1),
+            nth0(0,R,R1),
+            isAsConflict(L1,R1),
+            loopThrough(T).'''
 
     write_prolog_line(loopThrough)
 
