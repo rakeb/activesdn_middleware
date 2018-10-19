@@ -1,11 +1,11 @@
 (Link-Flooded(T,L)) ->
-    DO CheckUDPICMPFlows ON flows OF (proto=ICMP or UDP in P) BY IDS USING rate > 50% FOR DETECT OUTCOME P
+    DO CheckUDPICMPFlows ON flows OF (proto=ICMP or UDP in P) BY IDS USING rate > 20% FOR DETECT OUTCOME P
     ;
     IF P <> 0
         THEN
         DO Block ON flows OF (proto=ICMP or UDP in P) BY Switch<1.1.1.1> USING deny-command FOR PREVENT OUTCOME O1
 	ELSE
-	    DO CheckElephantTCPFlow ON flows OF (proto=TCP in E) BY IDS USING rate > 90% FOR DETECT OUTCOME E
+	    DO CheckElephantTCPFlow ON flows OF (proto=TCP in E) BY IDS USING rate > 4 FOR DETECT OUTCOME E
 	    ;
 	    IF E <> 0
 	        THEN

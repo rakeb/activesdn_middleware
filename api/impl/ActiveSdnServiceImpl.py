@@ -3,7 +3,12 @@ from api.request.base_request import post_request
 auth = ('admin', 'admin')
 
 # change the base url according to the server
-base_url = 'http://172.16.53.134:8181/restconf/operations/activesdn:'
+
+# for activesdn
+base_url = 'http://172.16.53.150:8181/restconf/operations/activesdn:'
+
+# TODO for testing with mock server
+# base_url = 'http://localhost:9999/'
 
 
 # Future < RpcResult < InstallPathSegmentOutput >> installPathSegment(InstallPathSegmentInput
@@ -47,7 +52,7 @@ def subscribeForLinkFloodingCheck(switch_id, connector_id, drop_threshold):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 #
@@ -105,7 +110,7 @@ def subscribeForStatsFromSwitch(switch_ids):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 #
@@ -192,7 +197,7 @@ def checkUdpIcmpFlows(switch_id, anomalous_rate):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 # rpc check-elephant-tcp-flow {
@@ -224,7 +229,7 @@ def checkElephantTcpFlow(switch_id, anomalous_threshold):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 # rpc check-new-comers {
@@ -256,7 +261,7 @@ def checkNewComers(sliding_window_size, new_comer_threshold):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 # rpc limit-flow {
@@ -297,7 +302,7 @@ def limitFlow(switch_id, flooded_link, source_ip):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 # rpc find-potential-flooded-link {
@@ -336,7 +341,7 @@ def findPotentialFloodedLink():
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 # rpc block-flow {
@@ -373,7 +378,7 @@ def blockFlow(switch_id, flow_id, type):
 
     r = post_request(url, data, auth)
 
-    print(r.text)
+    return r
 
 
 if __name__ == '__main__':

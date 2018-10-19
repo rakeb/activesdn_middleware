@@ -9,6 +9,8 @@ Usage::
 import logging
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+from api.handler import notification_handler
+
 
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
@@ -27,14 +29,21 @@ class S(BaseHTTPRequestHandler):
         logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                      str(self.path), str(self.headers), post_data.decode('utf-8'))
         data = post_data.decode('utf-8')
-        print(data)
+        # print(data)
 
         self._set_response()
         self.wfile.write("POST request for {}".format(self.path).encode('utf-8'))
 
+        # TODO checking notification as queue
+        # notification_handler.handle_notification(data)
 
-def run(server_class=HTTPServer, handler_class=S, port=5555):
+        notificationQueue = notification_handler.getNotificationQueue()
+        notificationQueue.put(data)
+
+
+def s_run(server_class=HTTPServer, handler_class=S, port=5555):
     logging.basicConfig(level=logging.INFO)
+    print(port)
     server_address = ('172.16.53.1', port)
     httpd = server_class(server_address, handler_class)
     logging.info('Starting httpd...\n')
@@ -50,6 +59,6 @@ if __name__ == '__main__':
     from sys import argv
 
     if len(argv) == 2:
-        run(port=int(argv[1]))
+        s_run(port=int(argv[1]))
     else:
-        run()
+        s_run()

@@ -1,9 +1,12 @@
+import json
+
 import requests
 
 
 def post_request(url, data, auth):
     resp = requests.post(url, json=data, auth=auth)
-    return resp
+    json_obj = json.loads(resp.text)
+    return json_obj
 
 
 if __name__ == '__main__':
